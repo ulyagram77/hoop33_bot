@@ -1,4 +1,4 @@
-# hoop33_bot
+# Bot for hooping basketball 33 game
 
 ## Environment Variables
 
