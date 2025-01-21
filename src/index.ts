@@ -1,36 +1,45 @@
 import dotenv from 'dotenv';
 import { Bot, GrammyError, HttpError } from 'grammy';
+import * as emoji from 'node-emoji';
+import { HoopBotService } from './services/HoopBotService';
 
 dotenv.config();
 
 const bot = new Bot(process.env.BOT_API_KEY);
+const botService = new HoopBotService();
 
 bot.api.setMyCommands([
   {
-    command: 'start',
-    description: 'Start a bot',
+    command: 'hoop_game',
+    description: 'Start 33 basketball game',
   },
   {
-    command: 'hello',
-    description: 'Get a greeting from bot',
+    command: 'info',
+    description: 'Get some info about bot',
   },
 ]);
 
-bot.command('start', async (ctx) => {
-  await ctx.reply('Hi I am hoop 33 bot and you are only botik)');
+bot.command('info', async (ctx) => {
+  await ctx.reply(
+    'Hi\\) __*I am hoop 33 bot*__\\. I can allow you to play 33 game with your friends\\. It will be funny and I will be a part of your company during the game\\. \nJust connect me to your telegram group via the __[bot link](t.me/hoop33_bot)__',
+    { parse_mode: 'MarkdownV2' },
+  );
 });
 
-bot.command(['hello'], async (ctx) => {
-  await ctx.reply('Hello botik)');
-});
+bot.command('hoop_game', (ctx) => botService.initGame(ctx));
 
-bot.on(':voice', async (ctx) => {
-  await ctx.reply('Your voice so sex!!');
-});
-
-bot.on('::url', async (ctx) => {
-  await ctx.reply('Golyb told URLL!!');
-});
+bot.on('message').filter(
+  (ctx) => ctx.message.dice?.emoji === emoji.get(':basketball:'),
+  async (ctx) => {
+    await botService
+      .playerTurnHandler(ctx)
+      .then(() => botService.botTurnHandler(ctx))
+      .then(() => botService.showAllScores(ctx))
+      .catch((e) => {
+        console.log(e);
+      });
+  },
+);
 
 bot.catch((err) => {
   const ctx = err.ctx;
